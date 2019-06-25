@@ -26,6 +26,14 @@ android {
         versionName rootProject.versionName
         resConfigs rootProject.resConfigs
     }
+    signingConfigs {
+        release {
+            storeFile file("../shadowsocks.jks")
+            storePassword "shadowsocks"
+            keyAlias "shadowsocks"
+            keyPassword "shadowsocks"
+        }
+    }
     buildTypes {
         debug {
             multiDexEnabled true
@@ -35,6 +43,7 @@ android {
             shrinkResources true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     compileOptions {
