@@ -48,9 +48,6 @@ import com.github.shadowsocks.utils.datas
 import com.github.shadowsocks.utils.printLog
 import com.github.shadowsocks.utils.readableMessage
 import com.github.shadowsocks.widget.UndoSnackbarManager
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import net.glxn.qrgen.android.QRCode
 
 class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
@@ -72,7 +69,6 @@ class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
     private val isEnabled get() = (activity as MainActivity).state.let { it.canStop || it == BaseService.State.Stopped }
     private fun isProfileEditable(id: Long) =
             (activity as MainActivity).state == BaseService.State.Stopped || id !in Core.activeProfileIds
-    private var isAdLoaded = false
 
     @SuppressLint("ValidFragment")
     class QRCodeDialog() : DialogFragment() {
@@ -97,7 +93,6 @@ class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
         private val text2 = itemView.findViewById<TextView>(android.R.id.text2)
         private val traffic = itemView.findViewById<TextView>(R.id.traffic)
         private val edit = itemView.findViewById<View>(R.id.edit)
-        private var adView: AdView? = null
 
         init {
             edit.setOnClickListener {
@@ -114,39 +109,6 @@ class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
                 popup.show()
             }
             TooltipCompat.setTooltipText(share, share.contentDescription)
-        }
-
-        fun attach() {
-            if (!isAdLoaded && item.host == "198.199.101.152") {
-                if (this.adView == null) {
-                    val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                            AdSize.SMART_BANNER.getHeightInPixels(context))
-                    params.gravity = Gravity.CENTER_HORIZONTAL
-
-                    var adView = AdView(context)
-                    adView.layoutParams = params
-                    adView.adUnitId = "ca-app-pub-9097031975646651/7760346322"
-                    adView.adSize = AdSize.SMART_BANNER
-
-                    itemView.findViewById<LinearLayout>(R.id.content).addView(adView)
-
-                    // Load Ad
-                    val adBuilder = AdRequest.Builder()
-                    adBuilder.addTestDevice("B08FC1764A7B250E91EA9D0D5EBEB208")
-                    adBuilder.addTestDevice("7509D18EB8AF82F915874FEF53877A64")
-                    adView.loadAd(adBuilder.build())
-                    this.adView = adView
-                } else this.adView?.visibility = View.VISIBLE
-
-                isAdLoaded = true
-            } else this.adView?.visibility = View.GONE
-        }
-
-        fun detach() {
-            if (this.adView?.visibility == View.VISIBLE) {
-                isAdLoaded = false
-                this.adView?.visibility == View.GONE
-            }
         }
 
         fun bind(item: Profile) {
@@ -212,8 +174,6 @@ class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
             setHasStableIds(true)   // see: http://stackoverflow.com/a/32488059/2245107
         }
 
-        override fun onViewAttachedToWindow(holder: ProfileViewHolder)   = holder.attach()
-        override fun onViewDetachedFromWindow(holder: ProfileViewHolder) = holder.detach()
         override fun onBindViewHolder(holder: ProfileViewHolder, position: Int) = holder.bind(profiles[position])
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProfileViewHolder = ProfileViewHolder(
                 LayoutInflater.from(parent.context).inflate(R.layout.layout_profile, parent, false))
@@ -309,8 +269,6 @@ class ProfilesFragment : ToolbarFragment(), Toolbar.OnMenuItemClickListener {
         toolbar.setTitle(R.string.profiles)
         toolbar.inflateMenu(R.menu.profile_manager_menu)
         toolbar.setOnMenuItemClickListener(this)
-
-        isAdLoaded = false
 
         ProfileManager.ensureNotEmpty()
         val profilesList = view.findViewById<RecyclerView>(R.id.list)
