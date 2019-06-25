@@ -6,7 +6,6 @@ import urlparse
 import socket
 import logging
 from argparse import ArgumentParser
-from datetime import date
 
 __all__ = ['main']
 
@@ -36,7 +35,7 @@ def get_hostname(something):
         r = urlparse.urlparse(something)
         return r.hostname
     except Exception as e:
-        logging.error(e) 
+        logging.error(e)
         return None
 
 
@@ -81,15 +80,20 @@ def parse_gfwlist(content):
 def generate_acl(domains):
     header ="""#
 # GFW list from https://github.com/gfwlist/gfwlist/blob/master/gfwlist.txt
-# updated on DATE
 #
 
 [bypass_all]
 
 [proxy_list]
-
+# Telegram IPs$
+91.108.4.0/22
+91.108.8.0/21
+91.108.16.0/21
+91.108.36.0/22
+91.108.56.0/22
+109.239.140.0/24
+149.154.160.0/20
 """
-    header = header.replace('DATE', str(date.today()))
     proxy_content = ""
     ip_content = ""
 
