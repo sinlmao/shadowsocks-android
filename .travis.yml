@@ -1,0 +1,28 @@
+dist: xenial
+language: bash
+
+notifications:
+  email: false
+
+addons:
+  apt:
+    packages:
+      - python
+
+env:
+  global:
+    - secure: "HDoeEKJDPQ6VDtdVc3V/NJwC6si5/id7iQpG8CHJ5VR3hOC2DcDeaMJs9ss/1XicJJIkV3mX4l0DqdsiJ+N69tCTLpncMvZyjYhDUwUIOocuF7RETVjFYJO/NNiEsteeWli8kjdnz+Kg+gNWsw+HAxH94BywwN5M3LpBz3yzv5JQxrccK3yoB77dD1CT2NZ1iXs0XFS2nPNyHYTiwQZY7p8u+XeGCDdxlRRkrCzXwr9J2wRr4LHJYLk9t46sst4uLgH4KO8TLBxT3+UpB/A68drJtudLMy58QdwPtQFnpBOyeidudQgb2NubKqfcxNki9LYrrdyXogGnp6iPzJzYvPMl6+RlRxTkY+nBEJiwI3H+EYG4TCGnJvwmhCtiRbeiUclTrCO5zTcSieIGEGbbulZ6Q7SgD8QYpFd40S6US/Dnx8eGziuVLWSUKqN8Lhmf4//8dLzHN0UFVY/f9sewCjCtCnqpf0idNFE1JQl5ScuTppFShHTJMP+XwXRw/QFH5g0OJpRDEUBpKJVY2Pf0EKCL+UysXWsv1p+di+1DBDw5+N35apYKgRuazpZMCwTU88s/KdOtl4GoPONosV0FsCepbfwlZQGga42yCZxifPfhS5kcgXpAiJDTv/H4crTKN9YRjQiFrHsYQxVVVqL/lsO7CcrMqUL2Jz0Xoh9A1Q8="
+    - TZ: "Asia/Shanghai"
+
+script:
+  - bash generate.sh
+
+deploy:
+  provider: pages
+  local-dir: gh-pages
+  target-branch: gh-pages
+  keep-history: true
+  skip-cleanup: true
+  github-token: ${GITHUB_TOKEN}
+  on:
+    branch: acl
