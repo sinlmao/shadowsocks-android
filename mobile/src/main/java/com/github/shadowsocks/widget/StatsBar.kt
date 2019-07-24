@@ -25,6 +25,7 @@ import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.widget.TooltipCompat
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Observer
@@ -70,21 +71,26 @@ class StatsBar @JvmOverloads constructor(context: Context, attrs: AttributeSet? 
         super.setOnClickListener(l)
     }
 
+    private fun setStatus(text: CharSequence) {
+        statusText.text = text
+        TooltipCompat.setTooltipText(this, text)
+    }
+
     fun changeState(state: BaseService.State) {
         val activity = context as MainActivity
         if (state != BaseService.State.Connected) {
             updateTraffic(0, 0, 0, 0)
             tester.status.removeObservers(activity)
             if (state != BaseService.State.Idle) tester.invalidate()
-            statusText.setText(when (state) {
+            setStatus(context.getText(when (state) {
                 BaseService.State.Connecting -> R.string.connecting
                 BaseService.State.Stopping -> R.string.stopping
                 else -> R.string.not_connected
-            })
+            }))
         } else {
             behavior.slideUp(this)
             tester.status.observe(activity, Observer {
-                it.retrieve(statusText::setText) { activity.snackbar(it).show() }
+                it.retrieve(this::setStatus) { activity.snackbar(it).show() }
             })
         }
     }

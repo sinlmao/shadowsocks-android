@@ -76,7 +76,7 @@
           android:layout_weight="1"
           android:text="@string/bypass_apps"
           tools:checked="true"
-          android:tooltipText="@string/bypass_apps_summary" />
+          app:tooltipText="@string/bypass_apps_summary" />
     </RadioGroup>
 
   </androidx.constraintlayout.widget.ConstraintLayout>
@@ -94,6 +94,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:id="@+id/list"
+            android:clipToPadding="false"
             android:visibility="gone"
             app:fastScrollEnabled="true"
             app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb"

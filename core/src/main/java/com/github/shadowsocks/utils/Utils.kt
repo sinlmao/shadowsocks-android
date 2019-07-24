@@ -34,16 +34,21 @@ import android.os.Build
 import android.system.Os
 import android.system.OsConstants
 import android.util.TypedValue
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.AttrRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updateLayoutParams
 import androidx.preference.Preference
 import com.crashlytics.android.Crashlytics
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 fun <T> Iterable<T>.forEachTry(action: (T) -> Unit) {
     var result: Exception? = null
@@ -78,12 +83,18 @@ fun String?.parseNumericAddress(): InetAddress? = Os.inet_pton(OsConstants.AF_IN
 fun <K, V> MutableMap<K, V>.computeIfAbsentCompat(key: K, value: () -> V) = if (Build.VERSION.SDK_INT >= 24)
     computeIfAbsent(key) { value() } else this[key] ?: value().also { put(key, it) }
 
-suspend fun <T> HttpURLConnection.useCancellable(block: HttpURLConnection.() -> T) = withContext(Dispatchers.IO) {
-    suspendCancellableCoroutine<T> { cont ->
+suspend fun <T> HttpURLConnection.useCancellable(block: suspend HttpURLConnection.() -> T): T {
+    return suspendCancellableCoroutine { cont ->
         cont.invokeOnCancellation {
-            if (Build.VERSION.SDK_INT >= 26) disconnect() else launch(Dispatchers.IO) { disconnect() }
+            if (Build.VERSION.SDK_INT >= 26) disconnect() else GlobalScope.launch(Dispatchers.IO) { disconnect() }
         }
-        cont.resume(block())
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                cont.resume(block())
+            } catch (e: Throwable) {
+                cont.resumeWithException(e)
+            }
+        }
     }
 }
 
@@ -113,6 +124,18 @@ fun Resources.Theme.resolveResourceId(@AttrRes resId: Int): Int {
 }
 
 val Intent.datas get() = listOfNotNull(data) + (clipData?.asIterable()?.mapNotNull { it.uri } ?: emptyList())
+
+fun AppCompatActivity.consumeSystemWindowInsetsWithList() {
+    findViewById<View>(android.R.id.content).setOnApplyWindowInsetsListener { v, insets ->
+        v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            leftMargin = insets.systemWindowInsetLeft
+            topMargin = insets.systemWindowInsetTop
+            rightMargin = insets.systemWindowInsetRight
+        }
+        @Suppress("DEPRECATION")
+        insets.replaceSystemWindowInsets(0, 0, 0, insets.systemWindowInsetBottom)
+    }
+}
 
 fun printLog(t: Throwable) {
     Crashlytics.logException(t)

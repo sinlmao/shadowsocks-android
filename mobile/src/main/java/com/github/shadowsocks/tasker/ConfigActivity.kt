@@ -30,12 +30,14 @@ import android.widget.CheckedTextView
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.github.shadowsocks.R
 import com.github.shadowsocks.database.Profile
 import com.github.shadowsocks.database.ProfileManager
+import com.github.shadowsocks.utils.consumeSystemWindowInsetsWithList
 import com.github.shadowsocks.utils.resolveResourceId
 
 class ConfigActivity : AppCompatActivity() {
@@ -92,6 +94,7 @@ class ConfigActivity : AppCompatActivity() {
         }
         taskerOption = Settings.fromIntent(intent)
         setContentView(R.layout.layout_tasker)
+        consumeSystemWindowInsetsWithList()
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         toolbar.setTitle(R.string.app_name)
@@ -100,12 +103,18 @@ class ConfigActivity : AppCompatActivity() {
 
         switch = findViewById(R.id.serviceSwitch)
         switch.isChecked = taskerOption.switchOn
-        val profilesList = findViewById<RecyclerView>(R.id.list)
-        val lm = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
-        profilesList.layoutManager = lm
-        profilesList.itemAnimator = DefaultItemAnimator()
-        profilesList.adapter = profilesAdapter
-        if (taskerOption.profileId >= 0)
-            lm.scrollToPosition(profilesAdapter.profiles.indexOfFirst { it.id == taskerOption.profileId } + 1)
+        findViewById<RecyclerView>(R.id.list).apply {
+            setOnApplyWindowInsetsListener { v, insets ->
+                v.updatePadding(bottom = insets.systemWindowInsetBottom)
+                insets.consumeSystemWindowInsets()
+            }
+            itemAnimator = DefaultItemAnimator()
+            adapter = profilesAdapter
+            layoutManager = LinearLayoutManager(this@ConfigActivity, RecyclerView.VERTICAL, false).apply {
+                if (taskerOption.profileId >= 0) {
+                    scrollToPosition(profilesAdapter.profiles.indexOfFirst { it.id == taskerOption.profileId } + 1)
+                }
+            }
+        }
     }
 }

@@ -23,8 +23,9 @@ package com.github.shadowsocks.acl
 import android.content.Context
 import androidx.work.*
 import com.github.shadowsocks.Core
-import kotlinx.coroutines.Dispatchers
+import com.github.shadowsocks.utils.useCancellable
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -44,16 +45,14 @@ class AclSyncer(context: Context, workerParams: WorkerParameters) : CoroutineWor
         })
     }
 
-    override val coroutineContext get() = Dispatchers.IO
-
     override suspend fun doWork(): Result = try {
         val route = inputData.getString(KEY_ROUTE)!!
-        val acl = URL("https://pexcn.me/shadowsocks-android/acl/$route.acl").openStream().bufferedReader()
-                .use { it.readText() }
+        val connection = URL("https://pexcn.me/shadowsocks-android/acl/$route.acl").openConnection() as HttpURLConnection
+        val acl = connection.useCancellable { inputStream.bufferedReader().use { it.readText() } }
         Acl.getFile(route).printWriter().use { it.write(acl) }
         Result.success()
     } catch (e: IOException) {
         e.printStackTrace()
-        Result.retry()
+        if (runAttemptCount > 5) Result.failure() else Result.retry()
     }
 }
