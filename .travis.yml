@@ -15,11 +15,11 @@ env:
     - TZ: "Asia/Shanghai"
 
 script:
-  - bash generate.sh
+  - ./generate.sh
 
 deploy:
   provider: pages
-  local-dir: gh-pages
+  local-dir: release
   target-branch: gh-pages
   keep-history: true
   skip-cleanup: true

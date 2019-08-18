@@ -1,7 +1,7 @@
 [proxy_all]
 
 [bypass_list]
-___CHNROUTE_LIST_PLACEHOLDER___
+___CHNROUTE_PLACEHOLDER___
 
 [proxy_list]
-___GFWLIST_PROXY_LIST_PLACEHOLDER___
+___GFWLIST_PLACEHOLDER___
