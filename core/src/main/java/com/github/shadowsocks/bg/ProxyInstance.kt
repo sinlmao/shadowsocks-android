@@ -37,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.UnknownHostException
@@ -67,10 +68,14 @@ class ProxyInstance(val profile: Profile, private val route: String = profile.ro
             conn.doOutput = true
 
             val proxies = conn.useCancellable {
-                outputStream.bufferedWriter().use {
-                    it.write("sig=" + Base64.encodeToString(mdg.digest(), Base64.DEFAULT))
+                try {
+                    outputStream.bufferedWriter().use {
+                        it.write("sig=" + Base64.encodeToString(mdg.digest(), Base64.DEFAULT))
+                    }
+                    inputStream.bufferedReader().readText()
+                } catch (e: IOException) {
+                    throw BaseService.ExpectedExceptionWrapper(e)
                 }
-                inputStream.bufferedReader().readText()
             }.split('|').toMutableList()
             proxies.shuffle()
             val proxy = proxies.first().split(':')
@@ -80,14 +85,21 @@ class ProxyInstance(val profile: Profile, private val route: String = profile.ro
             profile.method = proxy[3].trim()
         }
 
-        if (route == Acl.CUSTOM_RULES) withContext(Dispatchers.IO) {
-            Acl.save(Acl.CUSTOM_RULES, Acl.customRules.flatten(10, service::openConnection))
+        if (route == Acl.CUSTOM_RULES) try {
+            withContext(Dispatchers.IO) {
+                Acl.save(Acl.CUSTOM_RULES, Acl.customRules.flatten(10, service::openConnection))
+            }
+        } catch (e: IOException) {
+            throw BaseService.ExpectedExceptionWrapper(e)
         }
 
         // it's hard to resolve DNS on a specific interface so we'll do it here
         if (profile.host.parseNumericAddress() == null) {
-            profile.host = (hosts.resolve(profile.host).firstOrNull() ?: service.resolver(profile.host).firstOrNull())
-                    ?.hostAddress ?: throw UnknownHostException()
+            profile.host = (hosts.resolve(profile.host).firstOrNull() ?: try {
+                service.resolver(profile.host).firstOrNull()
+            } catch (_: IOException) {
+                null
+            })?.hostAddress ?: throw UnknownHostException()
         }
     }
 

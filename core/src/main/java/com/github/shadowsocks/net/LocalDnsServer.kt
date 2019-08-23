@@ -22,6 +22,7 @@ package com.github.shadowsocks.net
 
 import android.util.Log
 import com.crashlytics.android.Crashlytics
+import com.github.shadowsocks.bg.BaseService
 import com.github.shadowsocks.utils.printLog
 import kotlinx.coroutines.*
 import org.xbill.DNS.*
@@ -85,11 +86,17 @@ class LocalDnsServer(private val localResolver: suspend (String) -> Array<InetAd
 
     private val monitor = ChannelMonitor()
 
-    override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler { _, t -> printLog(t) }
+    override val coroutineContext = SupervisorJob() + CoroutineExceptionHandler { _, t ->
+        if (t is IOException) Crashlytics.log(Log.WARN, TAG, t.message) else printLog(t)
+    }
 
     suspend fun start(listen: SocketAddress) = DatagramChannel.open().run {
         configureBlocking(false)
-        socket().bind(listen)
+        try {
+            socket().bind(listen)
+        } catch (e: BindException) {
+            throw BaseService.ExpectedExceptionWrapper(e)
+        }
         monitor.register(this, SelectionKey.OP_READ) { handlePacket(this) }
     }
 
