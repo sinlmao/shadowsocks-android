@@ -40,6 +40,7 @@ import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.getSystemService
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.*
 import com.github.shadowsocks.aidl.TrafficStats
 import com.github.shadowsocks.bg.BaseService
